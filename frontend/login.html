@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="card">
+    <h2>🌍 EcoTracker</h2>
+
+    <input id="name" placeholder="Name">
+    <input id="surname" placeholder="Surname">
+    <input id="password" type="password" placeholder="Password">
+
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
+</div>
+
+<script>
+const API = "http://localhost:3000";
+
+// REGISTER
+async function register() {
+    const name = document.getElementById("name").value;
+    const surname = document.getElementById("surname").value;
+    const password = document.getElementById("password").value;
+
+    const res = await fetch(API + "/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, surname, password })
+    });
+
+    const data = await res.json();
+    alert(data.message);
+}
+
+// LOGIN
+async function login() {
+    const name = document.getElementById("name").value;
+    const password = document.getElementById("password").value;
+
+    const res = await fetch(API + "/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, password })
+    });
+
+    const data = await res.json();
+
+    if (res.status === 200) {
+        localStorage.setItem("user", data.user.name);
+        window.location.href = "index.html";
+    } else {
+        alert(data.message);
+    }
+}
+</script>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h3 id="welcome"></h3>
+
+<div class="card">
+    <h1>🌍 Carbon Tracker</h1>
+
+    <select id="type">
+        <option value="car">Transport</option>
+        <option value="food">Food</option>
+        <option value="energy">Energy</option>
+    </select>
+
+    <input id="amount" type="number" placeholder="Enter amount">
+
+    <button onclick="addActivity()">Add Activity</button>
+    <button onclick="logout()">Logout</button>
+
+    <h2 id="total">Total CO₂: 0 kg</h2>
+
+    <canvas id="chart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const user = localStorage.getItem("user");
+
+if (!user) {
+    window.location.href = "login.html";
+}
+
+document.getElementById("welcome").innerText = "Welcome, " + user;
+
+let data = { car: 0, food: 0, energy: 0 };
+
+let chart;
+
+function updateChart() {
+    const ctx = document.getElementById("chart");
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+            labels: ["Transport", "Food", "Energy"],
+            datasets: [{
+                data: [data.car, data.food, data.energy]
+            }]
+        }
+    });
+}
+
+function addActivity() {
+    const type = document.getElementById("type").value;
+    const amount = document.getElementById("amount").value;
+
+    if (!amount) return;
+
+    const values = {
+        car: 2.3,
+        food: 5,
+        energy: 1.5
+    };
+
+    const co2 = amount * values[type];
+
+    data[type] += co2;
+
+    document.getElementById("total").innerText =
+        "Total CO₂: " + (data.car + data.food + data.energy).toFixed(2);
+
+    updateChart();
+}
+
+function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+}
+</script>
+<script>
+// ✅ REGISTER (simple version)
+function register() {
+    const name = document.getElementById("name").value;
+
+    if (!name) {
+        alert("Enter your name");
+        return;
+    }
+
+    // save user locally
+    localStorage.setItem("user", name);
+
+    alert("Registered successfully!");
+}
+
+// ✅ LOGIN (THIS IS THE MAIN FIX)
+function login() {
+    const name = document.getElementById("name").value;
+
+    if (!name) {
+        alert("Enter your name");
+        return;
+    }
+
+    // save user
+    localStorage.setItem("user", name);
+
+    // 🚀 REDIRECT TO MAIN PAGE
+    window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
+
